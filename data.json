@@ -1,0 +1,173 @@
+{
+  "users": [
+    {
+      "id": "27f179ed-3cbc-4f6f-8913-660308e54dc7",
+      "name": "Marwan Mostafa",
+      "email": "marwan.d.2008@gmail.com",
+      "team": "product",
+      "salt": "8ffe6fd01f7e2bbdfc7760d88f8b82be",
+      "password": "c901e59fdb47de04662b226da2c5048c1044e1f3b5803fa296d33ce82e50424837240b2704241de43a3129afc163c1a1ce2d28d745f1edf2669b85987fe0f051"
+    },
+    {
+      "id": "99984235-0962-4118-a06f-e9352612e278",
+      "name": "Marwan Mostafa",
+      "email": "soreal4004@gmail.com",
+      "team": "product",
+      "salt": "5292718e6d03045dbf0c0ed908ad40e6",
+      "password": "9d57cb25208881b8df488ca54ed64564766214e80afdb03702d0b55ef99c7d3569dcf1d1aea59d797a094647476494cc971c7d979ad84a25aa840fdafc3c55fa"
+    },
+    {
+      "id": "34444f54-831a-498d-a91d-c753507c5764",
+      "name": "AI Diagnostic",
+      "email": "diagnostic-91c24ee2@example.com",
+      "team": "product",
+      "salt": "ddc88b231bd8a6e6ff7bfff8305f6a61",
+      "password": "51be2db93d368771914798c8e26e7e98a664231b6318c62651e67c9acc847a4c2d27a7c2837a3c84d19e20d17589db447a805c94edc040bc972ef5ae4be3d79b"
+    }
+  ],
+  "teams": [
+    {
+      "id": "product",
+      "name": "Product Studio",
+      "icon": "PS"
+    },
+    {
+      "id": "engineers",
+      "name": "Platform Engineering",
+      "icon": "PE"
+    },
+    {
+      "id": "design",
+      "name": "Design Systems",
+      "icon": "DS"
+    }
+  ],
+  "messages": [
+    {
+      "id": 1,
+      "team": "product",
+      "author": "Alex Morgan",
+      "text": "The onboarding experiment is ready for review. We need a decision on the activation metric.",
+      "at": "09:24",
+      "global": true
+    },
+    {
+      "id": 2,
+      "team": "engineers",
+      "author": "Mina Chen",
+      "text": "FYI: the service now uses idempotency keys to prevent duplicate mutations during retries.",
+      "at": "09:31",
+      "global": true
+    },
+    {
+      "id": 3,
+      "team": "design",
+      "author": "Jon Bell",
+      "text": "Published the new component tokens and migration guide for everyone.",
+      "at": "09:42",
+      "global": true
+    },
+    {
+      "id": 1787648243357,
+      "team": "product",
+      "author": "Marwan Mostafa",
+      "text": "Hi",
+      "at": "11:57 AM",
+      "global": true
+    }
+  ],
+  "tasks": [
+    {
+      "id": 1,
+      "title": "Finalize Q3 onboarding flow",
+      "team": "product",
+      "owner": "Alex Morgan",
+      "due": "Aug 28",
+      "status": "In progress",
+      "assignee": "AM"
+    },
+    {
+      "id": 2,
+      "title": "Implement event idempotency",
+      "team": "engineers",
+      "owner": "Mina Chen",
+      "due": "Aug 26",
+      "status": "Review",
+      "assignee": "MC"
+    },
+    {
+      "id": 3,
+      "title": "Ship component token guide",
+      "team": "design",
+      "owner": "Jon Bell",
+      "due": "Aug 25",
+      "status": "Done",
+      "assignee": "JB"
+    },
+    {
+      "id": 4,
+      "title": "Run activation metric analysis",
+      "team": "product",
+      "owner": "Tara Cole",
+      "due": "Aug 30",
+      "status": "Planned",
+      "assignee": "TC"
+    },
+    {
+      "id": 1787645323035,
+      "title": "Blah",
+      "team": "product",
+      "owner": "Marwan Mostafa",
+      "due": "2 Sep",
+      "status": "Planned",
+      "assignee": "MM"
+    },
+    {
+      "id": 1787648257934,
+      "title": "Blah blah",
+      "team": "product",
+      "owner": "Marwan Mostafa",
+      "due": "march 3",
+      "status": "Planned",
+      "assignee": "MM"
+    }
+  ],
+  "changes": [
+    {
+      "id": 1787648290418,
+      "hash": "f23652",
+      "title": "Fixed title",
+      "file": "Desktio",
+      "kind": "Added",
+      "author": "Marwan Mostafa",
+      "time": "Just now"
+    },
+    {
+      "id": 1,
+      "hash": "a21e8f",
+      "title": "feat: add retry-safe payment mutations",
+      "author": "Mina Chen",
+      "file": "services/payments/mutations.ts",
+      "time": "12 min ago",
+      "kind": "Modified"
+    },
+    {
+      "id": 2,
+      "hash": "e94c33",
+      "title": "docs: publish component token migration",
+      "author": "Jon Bell",
+      "file": "docs/design/tokens.md",
+      "time": "1 hr ago",
+      "kind": "Added"
+    },
+    {
+      "id": 3,
+      "hash": "b71fd0",
+      "title": "fix: align activation event naming",
+      "author": "Alex Morgan",
+      "file": "analytics/events.ts",
+      "time": "3 hr ago",
+      "kind": "Modified"
+    }
+  ]
+}
