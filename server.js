@@ -11,7 +11,6 @@ const PORT = process.env.PORT || 3000;
 process.env.GEMINI_API_KEY ||= 'manual-key-configured';
 
 const ROOT = __dirname;
-// Use system temp directory on Vercel/serverless environments to allow file writes
 const DATA_FILE = path.join(os.tmpdir(), 'nexus_data.json');
 const SEED_FILE = path.join(ROOT, 'data.json');
 
@@ -27,7 +26,8 @@ function seed() {
   return { 
     users: [
       { id: '1', name: 'Alex Morgan', email: 'alex@example.com', team: 'product', role: 'leader', title: 'Project Manager', points: 150, salt: '', password: '' },
-      { id: '2', name: 'Mina Chen', email: 'mina@example.com', team: 'engineers', role: 'teammate', title: 'Software Engineer', points: 220, salt: '', password: '' }
+      { id: '2', name: 'Mina Chen', email: 'mina@example.com', team: 'engineers', role: 'teammate', title: 'Software Engineer', points: 220, salt: '', password: '' },
+      { id: '3', name: 'David Kim', email: 'david@example.com', team: 'design', role: 'teammate', title: 'UI/UX Designer', points: 90, salt: '', password: '' }
     ], 
     teams: [
       { id: 'product', name: 'Product Studio', icon: 'PS' }, 
@@ -35,13 +35,14 @@ function seed() {
       { id: 'design', name: 'Design Systems', icon: 'DS' }
     ], 
     messages: [
-      { id: 1, team: 'product', space: 'general', author: 'Alex Morgan', text: 'Welcome everyone to the general workspace discussion!', at: '09:24', global: true },
+      { id: 1, team: 'product', space: 'general', author: 'Alex Morgan', text: 'Welcome everyone to Product Studio!', at: '09:24', global: true },
       { id: 2, team: 'engineers', space: 'task-1', author: 'Mina Chen', text: 'Task 1 status: standard authentication flow is in progress.', at: '09:31', global: true },
-      { id: 3, team: 'product', space: 'fun', author: 'Alex Morgan', text: 'Happy Friday team! Any weekend gaming plans?', at: '09:42', global: true }
+      { id: 3, team: 'design', space: 'general', author: 'David Kim', text: 'Design tokens update is ready for review.', at: '09:42', global: true }
     ], 
     tasks: [
-      { id: 1, title: 'Finalize Q3 onboarding flow', team: 'product', owner: 'Alex Morgan', due: '2026-08-28', status: 'In progress', assignee: 'AM' },
-      { id: 2, title: 'Implement event idempotency', team: 'engineers', owner: 'Mina Chen', due: '2026-08-26', status: 'Review', assignee: 'MC' }
+      { id: 1, title: 'Finalize Q3 onboarding flow', team: 'product', owner: 'Alex Morgan', due: '2026-08-28', status: 'In progress', assignee: 'Alex Morgan' },
+      { id: 2, title: 'Implement event idempotency', team: 'engineers', owner: 'Mina Chen', due: '2026-08-26', status: 'Review', assignee: 'Mina Chen' },
+      { id: 3, title: 'Component library cleanup', team: 'design', owner: 'Alex Morgan', due: '2026-08-30', status: 'Planned', assignee: 'David Kim' }
     ], 
     changes: [
       { id: 1, hash: 'a21e8f', title: 'feat: add retry-safe payment mutations', author: 'Mina Chen', file: 'services/payments/mutations.ts', time: '12 min ago', kind: 'Modified' }
@@ -191,19 +192,75 @@ http.createServer(async (req, res) => {
     const u = requireUser(req, res, data); 
     if (!u) return;
 
+    if (req.method === 'POST' && url.pathname === '/api/teams/invite') {
+      if (u.role !== 'leader') return json(res, 403, { error: 'Only Project Managers can invite team members.' });
+      const b = await body(req);
+      if (!b.name || !b.email || !b.team) return json(res, 400, { error: 'Name, email, and team are required.' });
+      if (data.users.some(x => x.email === String(b.email).toLowerCase())) {
+        return json(res, 409, { error: 'A user with this email already exists.' });
+      }
+      
+      const tempPass = 'Nexus2026!';
+      const p = passwordHash(tempPass);
+      const newUser = {
+        id: crypto.randomUUID(),
+        name: String(b.name).trim(),
+        email: String(b.email).toLowerCase(),
+        team: b.team,
+        role: b.role === 'leader' ? 'leader' : 'teammate',
+        title: b.title || (b.role === 'leader' ? 'Project Manager' : 'Software Engineer'),
+        points: 0,
+        salt: p.salt,
+        password: p.hash
+      };
+      
+      data.users.push(newUser);
+      writeData(data);
+      return json(res, 201, { user: safeUser(newUser), tempPass });
+    }
+
     if (req.method === 'GET' && url.pathname === '/api/dashboard') {
-      const sortedLeaderboard = [...data.users]
+      const allUsers = [...data.users];
+      data.tasks.forEach(task => {
+        if (task.assignee && !allUsers.some(usr => usr.name === task.assignee)) {
+          allUsers.push({
+            id: crypto.randomUUID(),
+            name: task.assignee,
+            email: `${task.assignee.toLowerCase().replace(/\s+/g, '')}@example.com`,
+            team: task.team || 'product',
+            role: 'teammate',
+            title: 'Team Member',
+            points: 100
+          });
+        }
+      });
+
+      const sortedLeaderboard = allUsers
         .map(safeUser)
         .sort((a, b) => (b.points || 0) - (a.points || 0));
-      return json(res, 200, { teams: data.teams, messages: data.messages, tasks: data.tasks, changes: data.changes, leaderboard: sortedLeaderboard });
+
+      return json(res, 200, { 
+        teams: data.teams, 
+        messages: data.messages, 
+        tasks: data.tasks, 
+        changes: data.changes, 
+        leaderboard: sortedLeaderboard,
+        users: allUsers.map(safeUser)
+      });
     }
 
     if (req.method === 'POST' && url.pathname === '/api/messages') { 
       const b = await body(req); 
       if (!b.text?.trim()) return json(res, 400, { error: 'Message cannot be empty.' }); 
+      
+      const targetTeam = b.team || u.team;
+      if (u.role !== 'leader' && targetTeam !== u.team) {
+        return json(res, 403, { error: 'Access denied: Teammates can only post in their assigned team workspace.' });
+      }
+
       const m = {
         id: Date.now(),
-        team: b.team || u.team,
+        team: targetTeam,
         space: b.space || 'general',
         author: u.name,
         text: b.text.trim(),
@@ -216,38 +273,61 @@ http.createServer(async (req, res) => {
     }
 
     if (req.method === 'POST' && url.pathname === '/api/tasks') { 
-      if (u.role !== 'leader') return json(res, 403, { error: 'Only Leaders / Project Managers can create tasks.' });
+      if (u.role !== 'leader') return json(res, 403, { error: 'Only Project Managers can create tasks.' });
       const b = await body(req);
       if (!b.title?.trim() || !b.due) return json(res, 400, { error: 'Task name and deadline are required.' });
+      
+      const taskTeam = b.team || u.team;
       const t = {
         id: Date.now(),
         title: b.title.trim(),
-        team: b.team || u.team,
+        team: taskTeam,
         owner: u.name,
         due: b.due,
-        status: 'Planned',
-        assignee: u.name.split(/\s+/).map(x => x[0]).join('').slice(0, 2).toUpperCase()
+        status: b.status || 'Planned',
+        assignee: b.assignee || u.name
       };
       data.tasks.push(t);
       writeData(data);
       return json(res, 201, { task: t }); 
     }
 
+    if (req.method === 'POST' && url.pathname === '/api/tasks/status') {
+      const b = await body(req);
+      const task = data.tasks.find(t => t.id === Number(b.taskId));
+      if (!task) return json(res, 404, { error: 'Task not found.' });
+
+      if (u.role !== 'leader' && task.team !== u.team && task.assignee !== u.name) {
+        return json(res, 403, { error: 'Access denied to update this task.' });
+      }
+
+      task.status = b.status || task.status;
+      if (b.assignee) task.assignee = b.assignee;
+      writeData(data);
+      return json(res, 200, { task });
+    }
+
+    if (req.method === 'POST' && url.pathname === '/api/tasks/delete') {
+      if (u.role !== 'leader') return json(res, 403, { error: 'Only Project Managers can delete tasks.' });
+      const b = await body(req);
+      data.tasks = data.tasks.filter(t => t.id !== Number(b.taskId));
+      writeData(data);
+      return json(res, 200, { ok: true });
+    }
+
     if (req.method === 'POST' && url.pathname === '/api/tasks/submit') {
       const b = await body(req);
       const task = data.tasks.find(t => t.id === Number(b.taskId));
       if (!task) return json(res, 404, { error: 'Task not found.' });
-      if (task.status === 'Done') return json(res, 400, { error: 'Task is already marked as finished.' });
+      if (task.status === 'Done') return json(res, 400, { error: 'Task is already completed.' });
 
       task.status = 'Done';
       let pointsEarned = 100;
 
       const today = new Date().toISOString().split('T')[0];
-      if (task.due && today <= task.due) {
-        pointsEarned += 50;
-      }
+      if (task.due && today <= task.due) pointsEarned += 50;
 
-      const dbUser = data.users.find(x => x.id === u.id);
+      const dbUser = data.users.find(x => x.id === u.id || x.name === task.assignee);
       if (dbUser) {
         dbUser.points = (dbUser.points || 0) + pointsEarned;
         u.points = dbUser.points;
