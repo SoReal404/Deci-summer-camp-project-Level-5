@@ -1,182 +1,150 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <title>Nexus — Workspace & Leaderboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nexus Workspace</title>
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-  <div id="auth" class="auth-shell">
-    <section class="auth-copy">
-      <p class="eyebrow">NEXUS / COLLABORATION OS</p>
-      <h1>Work moves<br><i>as one.</i></h1>
-      <p>One focused place for teams to talk, deliver tasks, earn points, and monitor rankings.</p>
-      <div class="signal"><span></span> All systems operational</div>
-    </section>
-    
-    <section class="auth-card">
-      <div class="mark">N</div>
-      <h2 id="authTitle">Welcome back</h2>
-      <p id="authSub">Sign in to your workspace.</p>
+  <div id="auth-screen" class="auth-container">
+    <div class="auth-card">
+      <h2>Welcome to Nexus</h2>
+      <p class="auth-subtitle">Sign in or create an account to start collaborating</p>
       
-      <form id="authForm">
-        <input id="name" placeholder="Your name" autocomplete="name" hidden>
-        <input id="email" type="email" placeholder="Work email" required autocomplete="email">
-        <input id="password" type="password" placeholder="Password" required autocomplete="current-password">
-        
-        <select id="team" hidden>
+      <div class="auth-tabs">
+        <button id="tab-signin" class="tab-btn active">Sign In</button>
+        <button id="tab-signup" class="tab-btn">Sign Up</button>
+      </div>
+
+      <form id="form-signin" class="auth-form">
+        <input type="email" id="signin-email" placeholder="Email Address" required>
+        <input type="password" id="signin-password" placeholder="Password" required>
+        <button type="submit" class="primary-btn">Sign In</button>
+      </form>
+
+      <form id="form-signup" class="auth-form" hidden>
+        <input type="text" id="signup-name" placeholder="Full Name" required>
+        <input type="email" id="signup-email" placeholder="Email Address" required>
+        <input type="password" id="signup-password" placeholder="Password" required>
+        <select id="signup-team" required>
+          <option value="product">Product Studio (PS)</option>
+          <option value="engineers">Platform Engineering (PE)</option>
+          <option value="design">Design Systems (DS)</option>
+        </select>
+        <select id="signup-role" required>
+          <option value="teammate">Teammate</option>
+          <option value="leader">Project Manager (Leader)</option>
+        </select>
+        <button type="submit" class="primary-btn">Create Account</button>
+      </form>
+      <div id="auth-error" class="error-msg"></div>
+    </div>
+  </div>
+
+  <div id="app-screen" class="app-container" hidden>
+    <aside class="sidebar">
+      <div class="brand">
+        <h2>Nexus</h2>
+        <span id="user-role-badge" class="badge"></span>
+      </div>
+
+      <div class="sidebar-section">
+        <h3>Team Workspaces</h3>
+        <ul id="team-list" class="nav-list"></ul>
+      </div>
+
+      <div class="sidebar-section" id="invite-section" hidden>
+        <button id="btn-open-invite" class="secondary-btn small-btn">+ Invite Member</button>
+      </div>
+
+      <div class="sidebar-user">
+        <div id="user-display-name" class="user-name"></div>
+        <div id="user-display-team" class="user-team"></div>
+        <button id="btn-signout" class="text-btn">Sign Out</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="top-bar">
+        <h1 id="current-space-title">Product Studio</h1>
+        <div id="access-banner" class="warning-banner" hidden>
+          Restricted View: Project Manager access enabled across all teams.
+        </div>
+      </header>
+
+      <div class="dashboard-grid">
+        <section class="chat-section">
+          <div class="chat-header">
+            <span id="chat-channel-name">#general</span>
+          </div>
+          <div id="chat-messages" class="chat-messages"></div>
+          <form id="chat-form" class="chat-input-form">
+            <input type="text" id="chat-input" placeholder="Message the team..." required>
+            <button type="submit" class="primary-btn">Send</button>
+          </form>
+        </section>
+
+        <section class="tasks-section">
+          <div class="section-header">
+            <h3>Team Tasks</h3>
+            <button id="btn-new-task" class="primary-btn small-btn" hidden>+ New Task</button>
+          </div>
+          <div id="tasks-list" class="tasks-list"></div>
+        </section>
+
+        <section class="leaderboard-section">
+          <h3>Leaderboard</h3>
+          <div id="leaderboard-list" class="leaderboard-list"></div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal for Creating Tasks -->
+  <div id="task-modal" class="modal-overlay" hidden>
+    <div class="modal-card">
+      <h3>Create New Task</h3>
+      <form id="task-form">
+        <input type="text" id="task-title" placeholder="Task Title" required>
+        <select id="task-team">
           <option value="product">Product Studio</option>
           <option value="engineers">Platform Engineering</option>
           <option value="design">Design Systems</option>
         </select>
-
-        <select id="role" hidden>
-          <option value="teammate">Teammate (Standard Access)</option>
-          <option value="leader">Leader (Project Manager / Full Access)</option>
-        </select>
-
-        <select id="title" hidden>
-          <option value="Project Manager">Project Manager</option>
-          <option value="Software Engineer">Software Engineer</option>
-          <option value="Product Designer">Product Designer</option>
-          <option value="Operations">Operations Specialist</option>
-        </select>
-
-        <button id="authBtn">Sign in <b>→</b></button>
+        <input type="text" id="task-assignee" placeholder="Assignee Name" required>
+        <input type="date" id="task-due" required>
+        <div class="modal-actions">
+          <button type="button" id="btn-close-task" class="secondary-btn">Cancel</button>
+          <button type="submit" class="primary-btn">Save Task</button>
+        </div>
       </form>
-      
-      <p class="switch" id="switchText">New to Nexus? <button onclick="toggleAuth()">Create an account</button></p>
-      <p class="error" id="authError"></p>
-    </section>
+    </div>
   </div>
 
-  <main id="app" hidden>
-    <aside>
-      <div class="brand"><div class="mark">N</div>NEXUS</div>
-      <nav>
-        <button class="nav active" data-view="chat">◌ <span>Spaces & Chat</span></button>
-        <button class="nav" data-view="tasks">□ <span>Tasks & Submissions</span></button>
-        <button class="nav" data-view="leaderboard">🏆 <span>Leaderboard</span></button>
-        <button class="nav" data-view="team">◈ <span>My Team</span></button>
-        <button class="nav" data-view="changes">⌘ <span>Version Control</span></button>
-      </nav>
-      <div class="profile">
-        <div class="avatar" id="profileAvatar"></div>
-        <div>
-          <strong id="profileName"></strong>
-          <small id="profileRoleBadge"></small>
-        </div>
-        <button onclick="signout()">↗</button>
-      </div>
-    </aside>
-
-    <section class="workspace">
-      <header>
-        <div>
-          <p class="eyebrow" id="kicker">CONVERSATIONS</p>
-          <h2 id="pageTitle">Across the company</h2>
-        </div>
-        <div class="live"><span></span> Live workspace</div>
-      </header>
-      <div id="view"></div>
-    </section>
-  </main>
-
-  <template id="chatView">
-    <div class="chat-layout">
-      <div class="rooms">
-        <p class="label">SPACES</p>
-        <button class="room selected" onclick="switchSpace('general', this)"># &nbsp;General Talk</button>
-        <button class="room" onclick="switchSpace('task-1', this)"># &nbsp;Task 1 Space</button>
-        <button class="room" onclick="switchSpace('task-2', this)"># &nbsp;Task 2 Space</button>
-        <button class="room" onclick="switchSpace('fun', this)"># &nbsp;Fun & Resting Space</button>
-
-        <div class="team-stack" id="teams"></div>
-      </div>
-      
-      <div class="conversation">
-        <div class="conversation-head">
-          <div>
-            <h3 id="currentSpaceTitle"># General Talk</h3>
-            <p>Collaborate with your team in this channel</p>
-          </div>
-          <button class="outline" id="inviteBtn" onclick="handleInvite()" hidden>Invite people +</button>
-        </div>
-        <div class="messages" id="messages"></div>
-        <form class="composer" id="messageForm">
-          <input id="messageInput" placeholder="Share an update or chat in this space…">
-          <button>Send <b>↑</b></button>
-        </form>
-      </div>
-    </div>
-  </template>
-
-  <template id="tasksView">
-    <div class="toolbar">
-      <p>Submit completed tasks to earn points and climb the leaderboard.</p>
-      <button class="primary" id="createTaskBtn" onclick="openModal('task')" hidden>+ Create task</button>
-    </div>
-    <div class="task-grid" id="allTasks"></div>
-  </template>
-
-  <template id="leaderboardView">
-    <div class="team-hero">
-      <p class="eyebrow">GAMIFICATION</p>
-      <h3>Workspace Leaderboard</h3>
-      <p>Submit tasks on time to earn points and top the ranks!</p>
-    </div>
-    <div class="table-wrap" style="margin-top: 20px;">
-      <table>
-        <thead>
-          <tr>
-            <th>RANK</th>
-            <th>MEMBER</th>
-            <th>ROLE / TITLE</th>
-            <th>TEAM</th>
-            <th>POINTS</th>
-          </tr>
-        </thead>
-        <tbody id="leaderboardRows"></tbody>
-      </table>
-    </div>
-  </template>
-
-  <template id="teamView">
-    <div class="team-hero">
-      <p class="eyebrow">TEAM PULSE</p>
-      <h3 id="teamName"></h3>
-      <p>Your team's work, ownership, and commitments—without the status chase.</p>
-    </div>
-    <div class="team-summary" id="teamSummary"></div>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr><th>WORK ITEM</th><th>OWNER</th><th>DEADLINE</th><th>STATUS</th></tr>
-        </thead>
-        <tbody id="teamTasks"></tbody>
-      </table>
-    </div>
-  </template>
-
-  <template id="changesView">
-    <div class="toolbar">
-      <p>A human-readable record of every repository update.</p>
-      <button class="primary" onclick="openModal('change')">+ Log a change</button>
-    </div>
-    <div class="repo">
-      <div><span class="repo-dot"></span><strong>acme / nexus-platform</strong><small>main</small></div>
-      <button class="outline">Repository settings</button>
-    </div>
-    <div class="changes" id="changes"></div>
-  </template>
-
-  <div id="modal" class="modal" hidden>
+  <!-- Modal for Inviting Team Members -->
+  <div id="invite-modal" class="modal-overlay" hidden>
     <div class="modal-card">
-      <button class="close" onclick="closeModal()">×</button>
-      <p class="eyebrow" id="modalKicker"></p>
-      <h3 id="modalTitle"></h3>
-      <form id="modalForm"></form>
+      <h3>Invite New Team Member</h3>
+      <p class="modal-sub">Generate credentials for a new user.</p>
+      <form id="invite-form">
+        <input type="text" id="invite-name" placeholder="Full Name" required>
+        <input type="email" id="invite-email" placeholder="Email Address" required>
+        <select id="invite-team" required>
+          <option value="product">Product Studio (PS)</option>
+          <option value="engineers">Platform Engineering (PE)</option>
+          <option value="design">Design Systems (DS)</option>
+        </select>
+        <select id="invite-role" required>
+          <option value="teammate">Teammate</option>
+          <option value="leader">Project Manager (Leader)</option>
+        </select>
+        <div class="modal-actions">
+          <button type="button" id="btn-close-invite" class="secondary-btn">Cancel</button>
+          <button type="submit" class="primary-btn">Send Invite</button>
+        </div>
+      </form>
+      <div id="invite-result" class="info-msg" hidden></div>
     </div>
   </div>
 
