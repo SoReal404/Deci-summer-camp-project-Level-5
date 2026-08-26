@@ -1,290 +1,373 @@
-let state = { user: null, data: null, view: 'chat', signup: false, space: 'general' };
+let currentUser = null;
+let currentTeam = 'product';
+let dashboardData = { teams: [], messages: [], tasks: [], leaderboard: [], users: [] };
 
-const $ = s => document.querySelector(s);
-const esc = s => String(s).replace(/[&<>'"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[c]));
-
-async function api(url, opts = {}) {
-  const r = await fetch(url, { headers: { 'Content-Type': 'application/json' }, ...opts });
-  const d = await r.json();
-  if (!r.ok) throw new Error(d.error || 'Request failed');
-  return d;
-}
-
-function initials(n) { return n ? n.split(/\s+/).map(x => x[0]).join('').slice(0, 2).toUpperCase() : '??'; }
-function teamName(id) { return state.data?.teams?.find(t => t.id === id)?.name || id; }
-
-function toggleAuth() {
-  state.signup = !state.signup;
-  $('#name').hidden = !state.signup;
-  $('#team').hidden = !state.signup;
-  $('#role').hidden = !state.signup;
-  $('#title').hidden = !state.signup;
-  
-  $('#authTitle').textContent = state.signup ? 'Create your workspace account' : 'Welcome back';
-  $('#authSub').textContent = state.signup ? 'Select your role (Leader or Teammate) to get started.' : 'Sign in to your workspace.';
-  $('#authBtn').innerHTML = (state.signup ? 'Create account' : 'Sign in') + ' <b>→</b>';
-  $('#switchText').innerHTML = state.signup ? 'Already have an account? <button onclick="toggleAuth()">Sign in</button>' : 'New to Nexus? <button onclick="toggleAuth()">Create an account</button>';
-  $('#authError').textContent = '';
-}
-
-$('#authForm').addEventListener('submit', async e => {
-  e.preventDefault();
-  try {
-    const payload = {
-      name: $('#name').value,
-      email: $('#email').value,
-      password: $('#password').value,
-      team: $('#team').value,
-      role: $('#role').value,
-      title: $('#title').value
-    };
-    const r = await api('/api/auth/' + (state.signup ? 'signup' : 'signin'), { method: 'POST', body: JSON.stringify(payload) });
-    await boot(r.user);
-  } catch (err) {
-    $('#authError').textContent = err.message;
-  }
+document.addEventListener('DOMContentLoaded', () => {
+  initAuth();
+  initNavigation();
+  initModals();
+  checkSession();
 });
 
-async function boot(user) {
-  state.user = user;
-  state.data = await api('/api/dashboard');
-  $('#auth').hidden = true;
-  $('#app').hidden = false;
-  $('#profileName').textContent = user.name;
-  $('#profileRoleBadge').textContent = `${user.role === 'leader' ? '⭐ Leader' : 'Teammate'} • ${user.title || ''}`;
-  $('#profileAvatar').textContent = initials(user.name);
-  render();
+async function api(path, options = {}) {
+  options.headers = { 'Content-Type': 'application/json', ...options.headers };
+  const res = await fetch(path, options);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Request failed');
+  return data;
 }
 
-async function signout() {
-  await api('/api/auth/signout', { method: 'POST' });
-  location.reload();
+function checkSession() {
+  api('/api/auth/me')
+    .then(data => {
+      currentUser = data.user;
+      currentTeam = currentUser.team;
+      showApp();
+    })
+    .catch(() => {
+      showAuth();
+    });
 }
 
-function setView(v) {
-  state.view = v;
-  document.querySelectorAll('.nav').forEach(x => x.classList.toggle('active', x.dataset.view === v));
-  render();
+function initAuth() {
+  const tabSignin = document.getElementById('tab-signin');
+  const tabSignup = document.getElementById('tab-signup');
+  const formSignin = document.getElementById('form-signin');
+  const formSignup = document.getElementById('form-signup');
+  const errorDiv = document.getElementById('auth-error');
+
+  tabSignin?.addEventListener('click', () => {
+    tabSignin.classList.add('active');
+    tabSignup.classList.remove('active');
+    formSignin.hidden = false;
+    formSignup.hidden = true;
+    errorDiv.textContent = '';
+  });
+
+  tabSignup?.addEventListener('click', () => {
+    tabSignup.classList.add('active');
+    tabSignin.classList.remove('active');
+    formSignup.hidden = false;
+    formSignin.hidden = true;
+    errorDiv.textContent = '';
+  });
+
+  formSignin?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errorDiv.textContent = '';
+    try {
+      const data = await api('/api/auth/signin', {
+        method: 'POST',
+        body: JSON.stringify({
+          email: document.getElementById('signin-email').value,
+          password: document.getElementById('signin-password').value
+        })
+      });
+      currentUser = data.user;
+      currentTeam = currentUser.team;
+      showApp();
+    } catch (err) {
+      errorDiv.textContent = err.message;
+    }
+  });
+
+  formSignup?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errorDiv.textContent = '';
+    try {
+      const data = await api('/api/auth/signup', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: document.getElementById('signup-name').value,
+          email: document.getElementById('signup-email').value,
+          password: document.getElementById('signup-password').value,
+          team: document.getElementById('signup-team').value,
+          role: document.getElementById('signup-role').value
+        })
+      });
+      currentUser = data.user;
+      currentTeam = currentUser.team;
+      showApp();
+    } catch (err) {
+      errorDiv.textContent = err.message;
+    }
+  });
+
+  document.getElementById('btn-signout')?.addEventListener('click', async () => {
+    await api('/api/auth/signout', { method: 'POST' });
+    currentUser = null;
+    showAuth();
+  });
 }
 
-document.querySelectorAll('.nav').forEach(x => x.onclick = () => setView(x.dataset.view));
-
-function render() {
-  const settings = {
-    chat: ['SPACES & CHAT', 'Team Communication Spaces', 'chatView'],
-    tasks: ['TASKS & SUBMISSIONS', 'Work & Reward Pipeline', 'tasksView'],
-    leaderboard: ['LEADERBOARD', 'Top Contributors & Rankings', 'leaderboardView'],
-    team: ['MY TEAM', 'Focused Delivery', 'teamView'],
-    changes: ['VERSION CONTROL', 'Repository Activity', 'changesView']
-  }[state.view];
-
-  $('#kicker').textContent = settings[0];
-  $('#pageTitle').textContent = settings[1];
-  $('#view').replaceChildren($('#' + settings[2]).content.cloneNode(true));
-
-  if (state.view === 'chat') renderChat();
-  if (state.view === 'tasks') renderTasks();
-  if (state.view === 'leaderboard') renderLeaderboard();
-  if (state.view === 'team') renderTeam();
-  if (state.view === 'changes') renderChanges();
+function showAuth() {
+  document.getElementById('auth-screen').hidden = false;
+  document.getElementById('app-screen').hidden = true;
 }
 
-function switchSpace(space, element) {
-  state.space = space;
-  document.querySelectorAll('.rooms .room').forEach(r => r.classList.remove('selected'));
-  if (element) element.classList.add('selected');
+function showApp() {
+  document.getElementById('auth-screen').hidden = true;
+  document.getElementById('app-screen').hidden = false;
+
+  document.getElementById('user-display-name').textContent = currentUser.name;
+  document.getElementById('user-display-team').textContent = `${currentUser.team.toUpperCase()} (${currentUser.role})`;
+  document.getElementById('user-role-badge').textContent = currentUser.role === 'leader' ? 'Project Manager' : 'Teammate';
+
+  if (currentUser.role === 'leader') {
+    document.getElementById('btn-new-task').hidden = false;
+    document.getElementById('invite-section').hidden = false;
+  } else {
+    document.getElementById('btn-new-task').hidden = true;
+    document.getElementById('invite-section').hidden = true;
+  }
+
+  loadDashboard();
+}
+
+async function loadDashboard() {
+  try {
+    dashboardData = await api('/api/dashboard');
+    renderTeams();
+    renderChat();
+    renderTasks();
+    renderLeaderboard();
+  } catch (err) {
+    console.error('Error loading dashboard:', err);
+  }
+}
+
+function renderTeams() {
+  const teamList = document.getElementById('team-list');
+  if (!teamList) return;
   
-  const spaceTitles = {
-    'general': '# General Talk',
-    'task-1': '# Task 1 Space',
-    'task-2': '# Task 2 Space',
-    'fun': '# Fun & Resting Space'
-  };
-  
-  if ($('#currentSpaceTitle')) $('#currentSpaceTitle').textContent = spaceTitles[space] || space;
-  renderChatMessages();
+  teamList.innerHTML = '';
+  dashboardData.teams.forEach(team => {
+    const li = document.createElement('li');
+    const isUserTeam = currentUser.team === team.id;
+    const isLeader = currentUser.role === 'leader';
+    const canAccess = isLeader || isUserTeam;
+
+    li.className = `nav-item ${currentTeam === team.id ? 'active' : ''} ${!canAccess ? 'disabled' : ''}`;
+    li.innerHTML = `
+      <span class="team-icon">${team.icon}</span>
+      <span class="team-name">${team.name}</span>
+      ${!canAccess ? '<span class="lock-icon">🔒</span>' : ''}
+    `;
+
+    li.addEventListener('click', () => {
+      if (!canAccess) {
+        alert('Access Restricted: Teammates can only access their assigned team space.');
+        return;
+      }
+      currentTeam = team.id;
+      renderTeams();
+      renderChat();
+      renderTasks();
+    });
+
+    teamList.appendChild(li);
+  });
+
+  const spaceTitle = document.getElementById('current-space-title');
+  const activeTeamObj = dashboardData.teams.find(t => t.id === currentTeam);
+  if (spaceTitle && activeTeamObj) {
+    spaceTitle.textContent = activeTeamObj.name;
+  }
 }
 
 function renderChat() {
-  if ($('#inviteBtn')) $('#inviteBtn').hidden = state.user.role !== 'leader';
-  $('#teams').innerHTML = state.data.teams.map(t => `<div class="team-chip"><span class="avatar" style="display:inline-grid;width:20px;height:20px;font-size:8px;margin-right:7px">${t.icon}</span>${esc(t.name)}</div>`).join('');
+  const container = document.getElementById('chat-messages');
+  if (!container) return;
   
-  renderChatMessages();
+  container.innerHTML = '';
+  const filteredMessages = dashboardData.messages.filter(m => m.team === currentTeam);
 
-  $('#messageForm').onsubmit = async e => {
-    e.preventDefault();
-    const input = $('#messageInput');
-    try {
-      const r = await api('/api/messages', { method: 'POST', body: JSON.stringify({ text: input.value, space: state.space, global: true }) });
-      state.data.messages.push(r.message);
-      input.value = '';
-      renderChatMessages();
-    } catch (err) {
-      alert(err.message);
-    }
-  };
-}
+  if (filteredMessages.length === 0) {
+    container.innerHTML = '<div class="empty-state">No messages yet in this team space.</div>';
+    return;
+  }
 
-function renderChatMessages() {
-  const messagesContainer = $('#messages');
-  if (!messagesContainer) return;
-  
-  const spaceMsgs = state.data.messages.filter(m => (m.space || 'general') === state.space);
-  messagesContainer.innerHTML = spaceMsgs.map(m => `
-    <article class="message">
-      <div class="avatar">${initials(m.author)}</div>
-      <div>
-        <span class="message-name">${esc(m.author)}</span>
-        <span class="message-time">${m.at} · ${esc(teamName(m.team))}</span>
-        <p class="message-text">${esc(m.text)}</p>
-        ${m.team !== state.user.team ? `<button class="explain" onclick="explain(${m.id})">✦ Explain this with AI</button><div class="explanation" id="explain-${m.id}" hidden></div>` : ''}
+  filteredMessages.forEach(m => {
+    const div = document.createElement('div');
+    div.className = 'chat-message';
+    div.innerHTML = `
+      <div class="msg-header">
+        <strong class="msg-author">${m.author}</strong>
+        <span class="msg-time">${m.at}</span>
       </div>
-    </article>
-  `).join('');
+      <div class="msg-body">${m.text}</div>
+    `;
+    container.appendChild(div);
+  });
+  container.scrollTop = container.scrollHeight;
 }
 
-function handleInvite() {
-  if (state.user.role !== 'leader') return alert('Only leaders can invite new members.');
-  const email = prompt('Enter teammate email to send invite link:');
-  if (email) alert(`Invite successfully sent to ${email}!`);
-}
+document.getElementById('chat-form')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text) return;
 
-async function submitTask(taskId) {
   try {
-    const res = await api('/api/tasks/submit', { method: 'POST', body: JSON.stringify({ taskId }) });
-    alert(`🎉 Task Completed! You earned +${res.pointsEarned} points! Total Points: ${res.totalPoints}`);
-    state.data = await api('/api/dashboard');
-    render();
+    const res = await api('/api/messages', {
+      method: 'POST',
+      body: JSON.stringify({ team: currentTeam, text })
+    });
+    dashboardData.messages.push(res.message);
+    input.value = '';
+    renderChat();
+  } catch (err) {
+    alert(err.message);
+  }
+});
+
+function renderTasks() {
+  const container = document.getElementById('tasks-list');
+  if (!container) return;
+
+  container.innerHTML = '';
+  const isLeader = currentUser.role === 'leader';
+  const teamTasks = dashboardData.tasks.filter(t => t.team === currentTeam);
+
+  if (teamTasks.length === 0) {
+    container.innerHTML = '<div class="empty-state">No tasks created for this team.</div>';
+    return;
+  }
+
+  teamTasks.forEach(task => {
+    const div = document.createElement('div');
+    div.className = `task-card ${task.status === 'Done' ? 'completed' : ''}`;
+    
+    let actionsHtml = '';
+    if (task.status !== 'Done') {
+      actionsHtml += `<button class="secondary-btn small-btn" onclick="completeTask(${task.id})">Complete (+150 pts)</button>`;
+    }
+    if (isLeader) {
+      actionsHtml += `<button class="danger-btn small-btn" onclick="deleteTask(${task.id})">Delete</button>`;
+    }
+
+    div.innerHTML = `
+      <div class="task-info">
+        <h4>${task.title}</h4>
+        <p>Assignee: <strong>${task.assignee}</strong> | Due: ${task.due} | Status: <span class="status-badge">${task.status}</span></p>
+      </div>
+      <div class="task-actions">${actionsHtml}</div>
+    `;
+    container.appendChild(div);
+  });
+}
+
+async function completeTask(taskId) {
+  try {
+    const res = await api('/api/tasks/submit', {
+      method: 'POST',
+      body: JSON.stringify({ taskId })
+    });
+    alert(`Task completed! Points earned: +${res.pointsEarned}`);
+    await loadDashboard();
   } catch (err) {
     alert(err.message);
   }
 }
 
-function taskCard(t) {
-  const isDone = t.status === 'Done';
-  return `
-    <article class="task-card">
-      <div class="task-team">${esc(teamName(t.team).toUpperCase())}</div>
-      <h3>${esc(t.title)}</h3>
-      <div class="task-foot">
-        <span><span class="avatar" style="display:inline-grid;width:22px;height:22px;font-size:8px;vertical-align:middle;margin-right:6px">${t.assignee}</span>${esc(t.owner)}</span>
-        <span>Due: ${esc(t.due)}</span>
-      </div>
-      <div style="margin-top:18px; display:flex; justify-content:space-between; align-items:center;">
-        <span class="status">${esc(t.status)}</span>
-        ${!isDone ? `<button class="primary" style="padding:6px 12px; font-size:11px;" onclick="submitTask(${t.id})">Pass / Finish Task ➔</button>` : `<span style="color:#2ecc71; font-weight:bold; font-size:12px;">✓ Passed (+Pts)</span>`}
-      </div>
-    </article>
-  `;
-}
-
-function renderTasks() {
-  if ($('#createTaskBtn')) $('#createTaskBtn').hidden = state.user.role !== 'leader';
-  $('#allTasks').innerHTML = state.data.tasks.map(taskCard).join('');
-}
-
-function renderLeaderboard() {
-  const leaderboard = state.data.leaderboard || [];
-  $('#leaderboardRows').innerHTML = leaderboard.map((u, i) => `
-    <tr style="${u.id === state.user.id ? 'background: #A8001525;' : ''}">
-      <td><strong>#${i + 1}</strong></td>
-      <td>
-        <span class="owner">
-          <span class="avatar">${initials(u.name)}</span>
-          <strong>${esc(u.name)}</strong> ${u.id === state.user.id ? '(You)' : ''}
-        </span>
-      </td>
-      <td>${esc(u.title || (u.role === 'leader' ? 'Project Manager' : 'Teammate'))}</td>
-      <td>${esc(teamName(u.team))}</td>
-      <td><strong style="color:var(--red); font-size:16px;">${u.points || 0} pts</strong></td>
-    </tr>
-  `).join('');
-}
-
-function renderTeam() {
-  const tasks = state.data.tasks.filter(t => t.team === state.user.team);
-  const done = tasks.filter(t => t.status === 'Done').length;
-  $('#teamName').textContent = teamName(state.user.team);
-  $('#teamSummary').innerHTML = `
-    <div class="metric"><strong>${tasks.length}</strong><span>Open work items</span></div>
-    <div class="metric"><strong>${done}</strong><span>Completed</span></div>
-    <div class="metric"><strong>${tasks.filter(t => t.status === 'Review').length}</strong><span>In review</span></div>
-  `;
-  $('#teamTasks').innerHTML = tasks.map(t => `
-    <tr>
-      <td><strong>${esc(t.title)}</strong></td>
-      <td><span class="owner"><span class="avatar">${t.assignee}</span>${esc(t.owner)}</span></td>
-      <td>${esc(t.due)}</td>
-      <td><span class="status">${esc(t.status)}</span></td>
-    </tr>
-  `).join('');
-}
-
-function renderChanges() {
-  $('#changes').innerHTML = state.data.changes.map(c => `
-    <article>
-      <div>
-        <p class="change-title">${esc(c.title)}</p>
-        <span class="change-meta">${esc(c.author)} · ${esc(c.file)} · ${esc(c.time)}</span>
-      </div>
-      <div>
-        <span class="hash">${c.hash}</span>
-        <span class="status">${esc(c.kind)}</span>
-      </div>
-    </article>
-  `).join('');
-}
-
-function openModal(type) {
-  $('#modal').hidden = false;
-  const task = type === 'task';
-  $('#modalKicker').textContent = task ? 'NEW WORK ITEM' : 'MANUAL REPOSITORY LOG';
-  $('#modalTitle').textContent = task ? 'Create a task' : 'Log a change';
-  
-  $('#modalForm').innerHTML = task ? `
-    <input name="title" placeholder="What needs to be done?" required>
-    <input name="due" type="date" required>
-    <button class="primary">Create task</button>
-  ` : `
-    <input name="title" placeholder="Change title" required>
-    <input name="file" placeholder="File path changed" required>
-    <select name="kind"><option>Modified</option><option>Added</option><option>Removed</option></select>
-    <button class="primary">Log change</button>
-  `;
-
-  $('#modalForm').onsubmit = async e => {
-    e.preventDefault();
-    const d = Object.fromEntries(new FormData(e.target));
-    try {
-      const res = await api(task ? '/api/tasks' : '/api/changes', { method: 'POST', body: JSON.stringify(d) });
-      state.data[task ? 'tasks' : 'changes'][task ? 'push' : 'unshift'](res[task ? 'task' : 'change']);
-      closeModal();
-      render();
-    } catch (err) {
-      alert(err.message);
-    }
-  };
-}
-
-function closeModal() { $('#modal').hidden = true; }
-
-async function explain(id) {
-  const m = state.data.messages.find(x => x.id === id);
-  const box = $('#explain-' + id);
-  if (!box) return;
-  box.hidden = false;
-  box.textContent = 'Thinking…';
+async function deleteTask(taskId) {
+  if (!confirm('Are you sure you want to delete this task?')) return;
   try {
-    const res = await api('/api/explain', { method: 'POST', body: JSON.stringify({ text: m.text }) });
-    box.innerHTML = '<b>AI EXPLANATION</b><br>' + esc(res.explanation);
+    await api('/api/tasks/delete', {
+      method: 'POST',
+      body: JSON.stringify({ taskId })
+    });
+    await loadDashboard();
   } catch (err) {
-    box.textContent = err.message;
+    alert(err.message);
   }
 }
 
-(async () => {
-  try {
-    const r = await api('/api/auth/me');
-    await boot(r.user);
-  } catch {}
-})();
+function renderLeaderboard() {
+  const container = document.getElementById('leaderboard-list');
+  if (!container) return;
+
+  container.innerHTML = '';
+  const list = dashboardData.leaderboard || [];
+
+  if (list.length === 0) {
+    container.innerHTML = '<div class="empty-state">No users on the leaderboard yet.</div>';
+    return;
+  }
+
+  list.forEach((u, index) => {
+    const div = document.createElement('div');
+    div.className = 'leaderboard-row';
+    div.innerHTML = `
+      <span class="rank">#${index + 1}</span>
+      <span class="name">${u.name} (${u.team.toUpperCase()})</span>
+      <span class="points">${u.points || 0} pts</span>
+    `;
+    container.appendChild(div);
+  });
+}
+
+function initNavigation() {
+  document.getElementById('btn-new-task')?.addEventListener('click', () => {
+    document.getElementById('task-modal').hidden = false;
+  });
+
+  document.getElementById('btn-close-task')?.addEventListener('click', () => {
+    document.getElementById('task-modal').hidden = true;
+  });
+
+  document.getElementById('btn-open-invite')?.addEventListener('click', () => {
+    document.getElementById('invite-modal').hidden = false;
+    document.getElementById('invite-result').hidden = true;
+  });
+
+  document.getElementById('btn-close-invite')?.addEventListener('click', () => {
+    document.getElementById('invite-modal').hidden = true;
+  });
+}
+
+function initModals() {
+  document.getElementById('task-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    try {
+      await api('/api/tasks', {
+        method: 'POST',
+        body: JSON.stringify({
+          title: document.getElementById('task-title').value,
+          team: document.getElementById('task-team').value,
+          assignee: document.getElementById('task-assignee').value,
+          due: document.getElementById('task-due').value
+        })
+      });
+      document.getElementById('task-modal').hidden = true;
+      document.getElementById('task-form').reset();
+      await loadDashboard();
+    } catch (err) {
+      alert(err.message);
+    }
+  });
+
+  document.getElementById('invite-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const resultDiv = document.getElementById('invite-result');
+    try {
+      const res = await api('/api/teams/invite', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: document.getElementById('invite-name').value,
+          email: document.getElementById('invite-email').value,
+          team: document.getElementById('invite-team').value,
+          role: document.getElementById('invite-role').value
+        })
+      });
+
+      resultDiv.hidden = false;
+      resultDiv.innerHTML = `Member Invited Successfully!<br>Email: <strong>${res.user.email}</strong><br>Temporary Password: <strong>${res.tempPass}</strong>`;
+      document.getElementById('invite-form').reset();
+      await loadDashboard();
+    } catch (err) {
+      resultDiv.hidden = false;
+      resultDiv.textContent = err.message;
+    }
+  });
+}
