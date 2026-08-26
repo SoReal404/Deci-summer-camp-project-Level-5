@@ -11,8 +11,8 @@
 }
 
 body {
-  background-color: #0f172a;
-  color: #f8fafc;
+  background-color: #121212;
+  color: #F5F5F7;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -25,27 +25,28 @@ body {
   justify-content: center;
   min-height: 100vh;
   padding: 20px;
-  background: radial-gradient(circle at top, #1e293b 0%, #0f172a 100%);
+  background: radial-gradient(circle at top, #1C1C1C 0%, #121212 100%);
 }
 
 .auth-card {
-  background: #1e293b;
-  border: 1px solid #334155;
+  background: #1C1C1C;
+  border: 1px solid #2a2a2a;
   border-radius: 12px;
   padding: 32px;
   width: 100%;
   max-width: 400px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
 }
 
 .auth-card h2 {
   font-size: 1.5rem;
   margin-bottom: 6px;
   text-align: center;
+  color: #F5F5F7;
 }
 
 .auth-subtitle {
-  color: #94a3b8;
+  color: #a1a1a6;
   font-size: 0.875rem;
   text-align: center;
   margin-bottom: 24px;
@@ -53,7 +54,7 @@ body {
 
 .auth-tabs {
   display: flex;
-  background: #0f172a;
+  background: #121212;
   border-radius: 8px;
   padding: 4px;
   margin-bottom: 20px;
@@ -64,7 +65,7 @@ body {
   padding: 8px 16px;
   background: transparent;
   border: none;
-  color: #94a3b8;
+  color: #a1a1a6;
   font-weight: 500;
   border-radius: 6px;
   cursor: pointer;
@@ -72,8 +73,8 @@ body {
 }
 
 .tab-btn.active {
-  background: #3b82f6;
-  color: #ffffff;
+  background: #D31027;
+  color: #F5F5F7;
 }
 
 .auth-form {
@@ -85,21 +86,21 @@ body {
 input, select {
   width: 100%;
   padding: 10px 14px;
-  background: #0f172a;
-  border: 1px solid #334155;
+  background: #121212;
+  border: 1px solid #2a2a2a;
   border-radius: 6px;
-  color: #f8fafc;
+  color: #F5F5F7;
   font-size: 0.9rem;
 }
 
 input:focus, select:focus {
   outline: none;
-  border-color: #3b82f6;
+  border-color: #D31027;
 }
 
 .primary-btn {
-  background: #3b82f6;
-  color: white;
+  background: #D31027;
+  color: #F5F5F7;
   border: none;
   padding: 10px 16px;
   border-radius: 6px;
@@ -109,12 +110,12 @@ input:focus, select:focus {
 }
 
 .primary-btn:hover {
-  background: #2563eb;
+  background: #A80015;
 }
 
 .secondary-btn {
-  background: #334155;
-  color: #f8fafc;
+  background: #2a2a2a;
+  color: #F5F5F7;
   border: none;
   padding: 10px 16px;
   border-radius: 6px;
@@ -122,12 +123,12 @@ input:focus, select:focus {
 }
 
 .secondary-btn:hover {
-  background: #475569;
+  background: #383838;
 }
 
 .danger-btn {
-  background: #ef4444;
-  color: white;
+  background: #A80015;
+  color: #F5F5F7;
   border: none;
   padding: 6px 12px;
   border-radius: 6px;
@@ -135,7 +136,7 @@ input:focus, select:focus {
 }
 
 .danger-btn:hover {
-  background: #dc2626;
+  background: #D31027;
 }
 
 .small-btn {
@@ -146,26 +147,26 @@ input:focus, select:focus {
 .text-btn {
   background: transparent;
   border: none;
-  color: #ef4444;
+  color: #D31027;
   cursor: pointer;
   font-size: 0.85rem;
 }
 
 .error-msg {
-  color: #f87171;
+  color: #D31027;
   font-size: 0.85rem;
   margin-top: 12px;
   text-align: center;
 }
 
 .info-msg {
-  background: #1e293b;
-  border: 1px solid #3b82f6;
+  background: #1C1C1C;
+  border: 1px solid #A80015;
   padding: 12px;
   border-radius: 6px;
   margin-top: 14px;
   font-size: 0.85rem;
-  color: #38bdf8;
+  color: #F5F5F7;
 }
 
 /* App Main Layout */
@@ -177,8 +178,8 @@ input:focus, select:focus {
 
 .sidebar {
   width: 260px;
-  background: #1e293b;
-  border-right: 1px solid #334155;
+  background: #1C1C1C;
+  border-right: 1px solid #2a2a2a;
   display: flex;
   flex-direction: column;
   padding: 20px;
@@ -192,8 +193,8 @@ input:focus, select:focus {
 }
 
 .badge {
-  background: #3b82f6;
-  color: white;
+  background: #D31027;
+  color: #F5F5F7;
   font-size: 0.7rem;
   padding: 2px 8px;
   border-radius: 12px;
@@ -207,7 +208,7 @@ input:focus, select:focus {
 .sidebar-section h3 {
   font-size: 0.75rem;
   text-transform: uppercase;
-  color: #64748b;
+  color: #8e8e93;
   margin-bottom: 12px;
   letter-spacing: 0.05em;
 }
@@ -226,18 +227,18 @@ input:focus, select:focus {
   padding: 10px 12px;
   border-radius: 6px;
   cursor: pointer;
-  color: #94a3b8;
+  color: #a1a1a6;
   transition: all 0.2s ease;
 }
 
 .nav-item:hover:not(.disabled) {
-  background: #334155;
-  color: #f8fafc;
+  background: #2a2a2a;
+  color: #F5F5F7;
 }
 
 .nav-item.active {
-  background: #3b82f6;
-  color: #ffffff;
+  background: #D31027;
+  color: #F5F5F7;
 }
 
 .nav-item.disabled {
@@ -261,7 +262,7 @@ input:focus, select:focus {
 .sidebar-user {
   margin-top: auto;
   padding-top: 16px;
-  border-top: 1px solid #334155;
+  border-top: 1px solid #2a2a2a;
 }
 
 .user-name {
@@ -271,7 +272,7 @@ input:focus, select:focus {
 
 .user-team {
   font-size: 0.75rem;
-  color: #64748b;
+  color: #8e8e93;
   margin-bottom: 8px;
 }
 
@@ -280,23 +281,23 @@ input:focus, select:focus {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: #0f172a;
+  background: #121212;
   overflow-y: auto;
 }
 
 .top-bar {
   padding: 16px 24px;
-  background: #1e293b;
-  border-bottom: 1px solid #334155;
+  background: #1C1C1C;
+  border-bottom: 1px solid #2a2a2a;
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
 .warning-banner {
-  background: rgba(245, 158, 11, 0.1);
-  border: 1px solid #f59e0b;
-  color: #fbbf24;
+  background: rgba(168, 0, 21, 0.15);
+  border: 1px solid #A80015;
+  color: #F5F5F7;
   padding: 4px 12px;
   border-radius: 6px;
   font-size: 0.8rem;
@@ -312,8 +313,8 @@ input:focus, select:focus {
 
 /* Chat Section */
 .chat-section {
-  background: #1e293b;
-  border: 1px solid #334155;
+  background: #1C1C1C;
+  border: 1px solid #2a2a2a;
   border-radius: 8px;
   display: flex;
   flex-direction: column;
@@ -322,7 +323,7 @@ input:focus, select:focus {
 
 .chat-header {
   padding: 12px 16px;
-  border-bottom: 1px solid #334155;
+  border-bottom: 1px solid #2a2a2a;
   font-weight: 600;
 }
 
@@ -336,10 +337,10 @@ input:focus, select:focus {
 }
 
 .chat-message {
-  background: #0f172a;
+  background: #121212;
   padding: 10px 14px;
   border-radius: 6px;
-  border: 1px solid #334155;
+  border: 1px solid #2a2a2a;
 }
 
 .msg-header {
@@ -350,12 +351,12 @@ input:focus, select:focus {
 
 .msg-author {
   font-size: 0.85rem;
-  color: #38bdf8;
+  color: #D31027;
 }
 
 .msg-time {
   font-size: 0.75rem;
-  color: #64748b;
+  color: #8e8e93;
 }
 
 .msg-body {
@@ -364,15 +365,15 @@ input:focus, select:focus {
 
 .chat-input-form {
   padding: 12px;
-  border-top: 1px solid #334155;
+  border-top: 1px solid #2a2a2a;
   display: flex;
   gap: 8px;
 }
 
 /* Tasks & Leaderboard */
 .tasks-section, .leaderboard-section {
-  background: #1e293b;
-  border: 1px solid #334155;
+  background: #1C1C1C;
+  border: 1px solid #2a2a2a;
   border-radius: 8px;
   padding: 16px;
 }
@@ -391,8 +392,8 @@ input:focus, select:focus {
 }
 
 .task-card {
-  background: #0f172a;
-  border: 1px solid #334155;
+  background: #121212;
+  border: 1px solid #2a2a2a;
   padding: 12px;
   border-radius: 6px;
   display: flex;
@@ -411,11 +412,11 @@ input:focus, select:focus {
 
 .task-info p {
   font-size: 0.75rem;
-  color: #94a3b8;
+  color: #a1a1a6;
 }
 
 .status-badge {
-  color: #38bdf8;
+  color: #D31027;
 }
 
 .task-actions {
@@ -435,24 +436,24 @@ input:focus, select:focus {
   align-items: center;
   justify-content: space-between;
   padding: 8px 12px;
-  background: #0f172a;
+  background: #121212;
   border-radius: 6px;
   font-size: 0.85rem;
 }
 
 .leaderboard-row .rank {
   font-weight: bold;
-  color: #3b82f6;
+  color: #D31027;
   width: 30px;
 }
 
 .leaderboard-row .points {
   font-weight: 600;
-  color: #10b981;
+  color: #F5F5F7;
 }
 
 .empty-state {
-  color: #64748b;
+  color: #8e8e93;
   font-size: 0.85rem;
   text-align: center;
   padding: 20px;
@@ -465,7 +466,7 @@ input:focus, select:focus {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.8);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -473,13 +474,13 @@ input:focus, select:focus {
 }
 
 .modal-card {
-  background: #1e293b;
-  border: 1px solid #334155;
+  background: #1C1C1C;
+  border: 1px solid #2a2a2a;
   border-radius: 12px;
   padding: 24px;
   width: 100%;
   max-width: 440px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.7);
 }
 
 .modal-card h3 {
@@ -488,7 +489,7 @@ input:focus, select:focus {
 
 .modal-sub {
   font-size: 0.85rem;
-  color: #94a3b8;
+  color: #a1a1a6;
   margin-bottom: 16px;
 }
 
